@@ -1,3 +1,2 @@
-# pythonLabs
-ЛР 1. Вариант №
-![image](https://github.com/user-attachments/assets/60e72bfb-8a32-4e54-b0ef-289004744944)
+ЛР 1. Вариант №3
+![image](https://github.com/user-attachments/assets/d1eb3b91-2943-4a35-9c08-f89efc817c03)
