@@ -1,1 +1,109 @@
+import logging
+import asyncio
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import Message
+from aiogram.enums import ParseMode
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.client.default import DefaultBotProperties
+from aiogram.filters import Command
 
+API_TOKEN = "7747733211:AAES7vxwZQAOiIsZbO0DocGeQ9D4bzyixN4"
+
+logging.basicConfig(level=logging.INFO)
+
+bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+dp = Dispatcher(storage=MemoryStorage())
+
+
+class Registration(StatesGroup):
+    waiting_for_name = State()
+    waiting_for_phone = State()
+    waiting_for_birthday = State()
+    waiting_for_race_type = State()
+
+
+@dp.message(Command("start"))
+async def cmd_start(message: Message, state: FSMContext):
+    await message.answer("Привет! Введите, пожалуйста, своё ФИО:")
+    await state.set_state(Registration.waiting_for_name)
+
+
+@dp.message(Registration.waiting_for_name)
+async def process_name(message: Message, state: FSMContext):
+    await state.update_data(name=message.text)
+    await message.answer("Теперь введите номер телефона (например, +79991234567):")
+    await state.set_state(Registration.waiting_for_phone)
+
+
+@dp.message(Registration.waiting_for_phone)
+async def process_phone(message: Message, state: FSMContext):
+    phone = message.text.strip()
+    if not (phone.startswith("+") and phone[1:].isdigit()):
+        await message.answer("Неверный формат номера телефона. Пожалуйста, введите номер в формате +79991234567:")
+        return
+    await state.update_data(phone=phone)
+    await message.answer("Введите дату рождения в формате ДД.ММ.ГГГГ (например, 31.12.1990):")
+    await state.set_state(Registration.waiting_for_birthday)
+
+
+@dp.message(Registration.waiting_for_birthday)
+async def process_birthday(message: Message, state: FSMContext):
+    birthday = message.text.strip()
+    import datetime
+    try:
+        datetime.datetime.strptime(birthday, "%d.%m.%Y")
+    except ValueError:
+        await message.answer("Неверный формат даты. Введите дату в формате ДД.MM.ГГГГ (например, 31.12.1990):")
+        return
+    await state.update_data(birthday=birthday)
+    await message.answer(
+        "Выберите тип забега:\n"
+        "1. 5 км\n"
+        "2. 10 км\n"
+        "3. Полумарафон\n"
+        "4. Марафон\n"
+        "5. 100 км"
+    )
+    await state.set_state(Registration.waiting_for_race_type)
+
+
+@dp.message(Registration.waiting_for_race_type)
+async def process_race_type(message: Message, state: FSMContext):
+    race_type = message.text.strip()
+    allowed = ['1', '2', '3', '4', '5']
+    if race_type not in allowed:
+        await message.answer("Пожалуйста, выберите вариант из списка: 1, 2, 3, 4 или 5.")
+        return
+    race_types = {
+        '1': '5 км',
+        '2': '10 км',
+        '3': 'Полумарафон',
+        '4': 'Марафон',
+        '5': '100 км'
+    }
+    data = await state.get_data()
+    name = data.get("name")
+    phone = data.get("phone")
+    birthday = data.get("birthday")
+    selected_race = race_types[race_type]
+
+    await message.answer(
+        f"Спасибо за регистрацию!\n\n"
+        f"ФИО: {name}\n"
+        f"Телефон: {phone}\n"
+        f"Дата рождения: {birthday}\n"
+        f"Тип забега: {selected_race}\n\n"
+        "Мы свяжемся с вами для подтверждения."
+    )
+
+    await state.clear()
+
+
+async def main():
+    await dp.start_polling(bot)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
