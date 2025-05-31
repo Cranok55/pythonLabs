@@ -10,3 +10,6 @@
 
 ![image](https://github.com/user-attachments/assets/f227d463-cb9d-4eea-8531-dce90ad5c3d6)
 
+ЛР 4. Тест
+
+![image](https://github.com/user-attachments/assets/7848ac80-b5f7-4928-805d-c130fc5ffc6a)
